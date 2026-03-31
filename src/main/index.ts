@@ -4,6 +4,27 @@ import path from 'path'
 
 let mainWindow: BrowserWindow | null = null
 
+function isAuthPopupUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw)
+    const host = u.hostname.toLowerCase()
+    const href = u.href.toLowerCase()
+
+    // Google OAuth pages
+    if (host === 'accounts.google.com') return true
+
+    // Firebase auth handler hosted on your firebaseapp.com domain
+    if (href.includes('/__/auth/')) return true
+
+    // Some flows may use googleusercontent for embedded assets/frames
+    if (host.endsWith('.googleusercontent.com')) return true
+
+    return false
+  } catch {
+    return false
+  }
+}
+
 function preloadPath(): string {
   const base = path.join(__dirname, '../preload')
   const mjs = path.join(base, 'index.mjs')
@@ -39,6 +60,12 @@ function createWindow(): void {
   }
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
+    // Allow Firebase/Google auth popups to open inside the app.
+    if (isAuthPopupUrl(details.url)) {
+      return { action: 'allow' }
+    }
+
+    // Everything else opens in the user's default browser.
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
