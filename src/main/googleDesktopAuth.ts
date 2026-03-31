@@ -8,8 +8,10 @@ export type DesktopGoogleAuthResult = {
 }
 
 declare const __GOOGLE_DESKTOP_CLIENT_ID__: string
+declare const __GOOGLE_DESKTOP_CLIENT_SECRET__: string
 
 const GOOGLE_CLIENT_ID = __GOOGLE_DESKTOP_CLIENT_ID__
+const GOOGLE_CLIENT_SECRET = __GOOGLE_DESKTOP_CLIENT_SECRET__
 const GOOGLE_SCOPES = ['openid', 'email', 'profile'].join(' ')
 const CALLBACK_PATH = '/oauth/callback'
 const AUTH_TIMEOUT_MS = 3 * 60 * 1000
@@ -69,18 +71,24 @@ async function exchangeCodeForTokens(
   verifier: string,
   redirectUri: string
 ): Promise<DesktopGoogleAuthResult> {
+  const body = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    code,
+    code_verifier: verifier,
+    grant_type: 'authorization_code',
+    redirect_uri: redirectUri
+  })
+
+  if (GOOGLE_CLIENT_SECRET) {
+    body.set('client_secret', GOOGLE_CLIENT_SECRET)
+  }
+
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded'
     },
-    body: new URLSearchParams({
-      client_id: GOOGLE_CLIENT_ID,
-      code,
-      code_verifier: verifier,
-      grant_type: 'authorization_code',
-      redirect_uri: redirectUri
-    })
+    body
   })
 
   const payload = (await response.json()) as {
@@ -91,7 +99,8 @@ async function exchangeCodeForTokens(
   }
 
   if (!response.ok || !payload.access_token || !payload.id_token) {
-    const reason = payload.error_description || payload.error || 'Desktop Google token exchange failed.'
+    const reason =
+      payload.error_description || payload.error || 'Desktop Google token exchange failed.'
     throw new Error(reason)
   }
 

@@ -45,13 +45,41 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+function getErrorDetails(error: unknown): string {
+  if (typeof error === 'object' && error) {
+    const code = 'code' in error ? String(error.code) : ''
+    const message = 'message' in error ? String(error.message) : ''
+    return [code, message].filter(Boolean).join(': ')
+  }
+  if (error instanceof Error) {
+    return error.message
+  }
+  return String(error ?? '')
+}
+
 function mapAuthError(error: unknown, runtime: AuthRuntime): string {
   if (error instanceof Error && error.message.startsWith('Missing or invalid Firebase config:')) {
     return 'Firebase config is invalid or missing. Check local env values and restart the app.'
   }
+  const details = getErrorDetails(error)
   if (runtime === 'electron' && error instanceof Error) {
     if (error.message.includes('GOOGLE_DESKTOP_CLIENT_ID')) {
       return 'Desktop Google sign-in is not configured. Add GOOGLE_DESKTOP_CLIENT_ID and restart Electron.'
+    }
+    if (details.includes('auth/api-key-not-valid') || details.includes('auth/invalid-api-key')) {
+      return 'Firebase config is invalid or missing. Check VITE_FIREBASE_API_KEY and restart the app.'
+    }
+    if (details.includes('auth/invalid-credential')) {
+      return 'Firebase rejected the Google credential. Check the Firebase project config and Google sign-in setup.'
+    }
+    if (details.includes('auth/operation-not-allowed')) {
+      return 'Google sign-in is not enabled in Firebase Authentication for this project.'
+    }
+    if (details.includes('auth/account-exists-with-different-credential')) {
+      return 'This email already exists with a different sign-in method in Firebase.'
+    }
+    if (details) {
+      return `Google sign-in failed: ${details}`
     }
     return 'Google sign-in failed. Please try again.'
   }
@@ -72,10 +100,10 @@ function mapAuthError(error: unknown, runtime: AuthRuntime): string {
       case 'auth/internal-error':
         return 'Google sign-in failed. Please try again.'
       default:
-        return 'Google sign-in failed. Please try again.'
+        return details ? `Google sign-in failed: ${details}` : 'Google sign-in failed. Please try again.'
     }
   }
-  return 'Google sign-in failed. Please try again.'
+  return details ? `Google sign-in failed: ${details}` : 'Google sign-in failed. Please try again.'
 }
 
 export function AuthProvider({ children }: { children: ReactNode }): JSX.Element {
@@ -152,6 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
         await signInWithCredential(a, credential)
         return
       } catch (e) {
+        console.error('Electron Google sign-in failed', e)
         setAuthInfo(null)
         const msg = mapAuthError(e, runtime)
         setAuthError(msg)
@@ -164,6 +193,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
     try {
       await signInWithPopup(a, provider)
     } catch (e) {
+      console.error('Web Google sign-in failed', e)
       const msg = mapAuthError(e, runtime)
       setAuthError(msg)
       throw new Error(msg)

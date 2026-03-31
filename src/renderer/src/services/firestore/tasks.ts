@@ -22,9 +22,32 @@ type FirestoreTaskDoc = Omit<PlannerTask, 'id'> & {
 }
 
 function toDoc(task: Omit<PlannerTask, 'id'>): FirestoreTaskDoc {
-  return {
+  const cleaned: FirestoreTaskDoc = {
     ...task
   }
+
+  if (cleaned.reminderAt === undefined) {
+    delete cleaned.reminderAt
+  }
+  if (cleaned.timeLabel === undefined) {
+    delete cleaned.timeLabel
+  }
+  if (cleaned.dueNotificationSent === undefined) {
+    delete cleaned.dueNotificationSent
+  }
+  if (cleaned.overdueNotificationSent === undefined) {
+    delete cleaned.overdueNotificationSent
+  }
+
+  return cleaned
+}
+
+function cleanPatch(
+  patch: Partial<Omit<PlannerTask, 'id'>>
+): Partial<Omit<PlannerTask, 'id'>> {
+  return Object.fromEntries(
+    Object.entries(patch).filter(([, value]) => value !== undefined)
+  ) as Partial<Omit<PlannerTask, 'id'>>
 }
 
 export function subscribeTasks(uid: string, cb: (items: PlannerTask[]) => void): Unsubscribe {
@@ -65,7 +88,7 @@ export async function upsertTask(uid: string, task: PlannerTask): Promise<void> 
 export async function updateTask(uid: string, id: string, patch: Partial<Omit<PlannerTask, 'id'>>): Promise<void> {
   const ref = doc(db(), 'users', uid, 'tasks', id)
   await updateDoc(ref, {
-    ...patch,
+    ...cleanPatch(patch),
     updatedAt: serverTimestamp()
   })
 }

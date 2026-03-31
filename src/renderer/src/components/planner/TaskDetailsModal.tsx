@@ -21,13 +21,15 @@ export function TaskDetailsModal({
   onOpenChange,
   task,
   onToggleComplete,
-  onPostpone
+  onPostpone,
+  onEdit
 }: {
   open: boolean
   onOpenChange: (v: boolean) => void
   task: PlannerTask | null
   onToggleComplete: (id: string) => void
   onPostpone: (id: string) => { ok: boolean; warning?: string }
+  onEdit: (task: PlannerTask) => void
 }): JSX.Element {
   if (!task) return <></>
 
@@ -138,7 +140,7 @@ export function TaskDetailsModal({
               <Button
                 variant="secondary"
                 className="w-full justify-center gap-2"
-                onClick={() => alert('Edit flow can open AddTaskModal in edit mode.')}
+                onClick={() => onEdit(task)}
               >
                 <Pencil className="h-4 w-4" />
                 Edit Task

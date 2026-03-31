@@ -39,6 +39,7 @@ export function PlannerPage(): JSX.Element {
   const [dayOpen, setDayOpen] = useState(false)
   const [taskOpen, setTaskOpen] = useState(false)
   const [activeDayKey, setActiveDayKey] = useState<string | null>(null)
+  const [editingTask, setEditingTask] = useState<PlannerTask | null>(null)
 
   const selected = useMemo(
     () => tasks.find((t) => t.id === selectedTaskId) ?? null,
@@ -56,7 +57,10 @@ export function PlannerPage(): JSX.Element {
       <TopHeader
         month={month}
         onToday={() => setMonth(new Date())}
-        onAddTask={() => setAddOpen(true)}
+        onAddTask={() => {
+          setEditingTask(null)
+          setAddOpen(true)
+        }}
       />
 
       <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-6 pb-8 pt-2 lg:px-8 lg:pb-10">
@@ -102,8 +106,13 @@ export function PlannerPage(): JSX.Element {
 
       <AddTaskModal
         open={addOpen}
-        onOpenChange={setAddOpen}
-        initial={null}
+        onOpenChange={(nextOpen) => {
+          setAddOpen(nextOpen)
+          if (!nextOpen) {
+            setEditingTask(null)
+          }
+        }}
+        initial={editingTask}
         onSave={(t: PlannerTask) => upsertTask(t)}
       />
       <DayTasksModal
@@ -125,6 +134,11 @@ export function PlannerPage(): JSX.Element {
         task={selected}
         onToggleComplete={toggleComplete}
         onPostpone={postpone}
+        onEdit={(task) => {
+          setEditingTask(task)
+          setTaskOpen(false)
+          setAddOpen(true)
+        }}
       />
 
     </div>

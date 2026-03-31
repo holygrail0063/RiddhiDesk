@@ -25,7 +25,8 @@ const rendererEnvDefine = Object.fromEntries(
 )
 
 const mainEnvDefine = {
-  __GOOGLE_DESKTOP_CLIENT_ID__: JSON.stringify(process.env.GOOGLE_DESKTOP_CLIENT_ID ?? '')
+  __GOOGLE_DESKTOP_CLIENT_ID__: JSON.stringify(process.env.GOOGLE_DESKTOP_CLIENT_ID ?? ''),
+  __GOOGLE_DESKTOP_CLIENT_SECRET__: JSON.stringify(process.env.GOOGLE_DESKTOP_CLIENT_SECRET ?? '')
 }
 
 export default defineConfig({
