@@ -4,7 +4,15 @@ import { RiddhiDeskLogin } from '@/components/auth/RiddhiDeskLogin'
 import { useAuth } from '@/store/authContext'
 
 export function LoginPage(): JSX.Element {
-  const { status, signInGoogle, accessDenied, clearAccessDenied, allowedEmail } = useAuth()
+  const {
+    status,
+    signInGoogle,
+    accessDenied,
+    clearAccessDenied,
+    allowedEmail,
+    authError,
+    clearAuthError
+  } = useAuth()
   const [busy, setBusy] = useState(false)
   const [signInError, setSignInError] = useState<string | null>(null)
 
@@ -23,6 +31,7 @@ export function LoginPage(): JSX.Element {
   const onGoogle = async (): Promise<void> => {
     setSignInError(null)
     clearAccessDenied()
+    clearAuthError()
     setBusy(true)
     try {
       await signInGoogle()
@@ -37,7 +46,7 @@ export function LoginPage(): JSX.Element {
     ? allowedEmail
       ? `This account is not allowed. Sign in with ${allowedEmail}.`
       : 'This account is not allowed.'
-    : signInError
+    : authError || signInError
 
   return (
     <RiddhiDeskLogin
