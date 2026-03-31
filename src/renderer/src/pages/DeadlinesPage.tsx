@@ -113,7 +113,7 @@ export function DeadlinesPage(): JSX.Element {
           <h1 className="font-display text-3xl font-semibold text-ink-900">
             Deadlines / Dues
           </h1>
-          <p className="mt-1 text-ink-600">Fees, registrations, and dated study targets.</p>
+          <p className="mt-1 text-ink-600">Bills, registrations, and dated study targets.</p>
         </div>
         <Button onClick={openNew}>Add deadline</Button>
       </div>

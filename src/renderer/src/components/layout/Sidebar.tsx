@@ -2,19 +2,20 @@ import { NavLink } from 'react-router-dom'
 
 const links = [
   { to: '/dashboard', label: 'Dashboard' },
-  { to: '/notes', label: 'Notes' },
-  { to: '/deadlines', label: 'Deadlines / Dues' },
-  { to: '/plans', label: 'Future Plans' },
-  { to: '/calendar', label: 'Calendar' },
+  { to: '/planner', label: 'Planner' },
+  { to: '/tasks', label: 'Tasks' },
+  { to: '/reminders', label: 'Reminders' },
+  { to: '/completed', label: 'Completed' },
+  { to: '/needs-replan', label: 'Needs Replan' },
   { to: '/settings', label: 'Settings' }
 ]
 
 export function Sidebar(): JSX.Element {
   return (
-    <aside className="flex w-56 shrink-0 flex-col border-r border-paper-200 bg-paper-100/80 px-3 py-6">
+    <aside className="flex w-[240px] shrink-0 flex-col border-r border-paper-200 bg-paper-100/80 px-3 py-6">
       <div className="mb-8 px-2">
         <p className="font-display text-xl font-semibold text-ink-900">RiddhiDesk</p>
-        <p className="mt-1 text-xs text-ink-500">Study &amp; planning</p>
+        <p className="mt-1 text-xs text-ink-500">Planner • tasks • timelines</p>
       </div>
       <nav className="flex flex-1 flex-col gap-1">
         {links.map((l) => (

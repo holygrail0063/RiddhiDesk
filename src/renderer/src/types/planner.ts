@@ -5,7 +5,7 @@ export type TaskStatus = 'todo' | 'completed' | 'needs_replan'
 export type TaskCategory =
   | 'Study Goal'
   | 'Exams'
-  | 'Fees'
+  | 'Bill Payment'
   | 'Internship'
   | 'Revision'
   | 'Mock Exam'

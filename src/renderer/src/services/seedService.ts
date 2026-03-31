@@ -50,9 +50,9 @@ export async function seedDemoData(uid: string): Promise<void> {
   })
 
   await createDeadline(uid, {
-    title: 'Annual membership fee payment',
+    title: 'Annual membership Bill payment',
     description: 'SOA/ CAS fee deadline; keep receipt for records.',
-    category: 'Fees',
+    category: 'Bill Payment',
     dueDate: inDays(45),
     reminderAt: atTime(inDays(42), 8, 0),
     priority: 'medium',
@@ -78,7 +78,7 @@ export async function seedDemoData(uid: string): Promise<void> {
   })
 
   await createPlan(uid, {
-    title: 'Fee payment reminder (seed)',
+    title: 'Bill payment reminder (seed)',
     description: 'Placeholder plan entry tied to fee awareness; adjust dates as needed.',
     targetDate: inDays(40),
     status: 'planned',

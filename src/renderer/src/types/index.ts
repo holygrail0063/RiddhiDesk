@@ -2,7 +2,7 @@ import type { Timestamp } from 'firebase/firestore'
 
 export type NoteCategory =
   | 'Exams'
-  | 'Fees'
+  | 'Bill Payment'
   | 'Study Goals'
   | 'Personal Plans'
   | 'Internship Plans'

@@ -1,13 +1,14 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { DemoProtectedRoute } from '@/components/demo/DemoProtectedRoute'
 import { MainLayout } from '@/components/layout/MainLayout'
-import { AppDataProvider } from '@/store/appDataContext'
+import { PlannerProvider } from '@/store/plannerContext'
 import { LoginPage } from '@/pages/LoginPage'
 import { DashboardPage } from '@/pages/DashboardPage'
-import { NotesPage } from '@/pages/NotesPage'
-import { DeadlinesPage } from '@/pages/DeadlinesPage'
-import { PlansPage } from '@/pages/PlansPage'
-import { CalendarPage } from '@/pages/CalendarPage'
+import { PlannerPage } from '@/pages/PlannerPage'
+import { TasksPage } from '@/pages/TasksPage'
+import { CompletedPage } from '@/pages/CompletedPage'
+import { NeedsReplanPage } from '@/pages/NeedsReplanPage'
+import { RemindersPage } from '@/pages/RemindersPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 
 export default function App(): JSX.Element {
@@ -17,22 +18,23 @@ export default function App(): JSX.Element {
       <Route
         path="/"
         element={
-          <ProtectedRoute>
-            <AppDataProvider>
+          <DemoProtectedRoute>
+            <PlannerProvider>
               <MainLayout />
-            </AppDataProvider>
-          </ProtectedRoute>
+            </PlannerProvider>
+          </DemoProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route index element={<Navigate to="/planner" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="notes" element={<NotesPage />} />
-        <Route path="deadlines" element={<DeadlinesPage />} />
-        <Route path="plans" element={<PlansPage />} />
-        <Route path="calendar" element={<CalendarPage />} />
+        <Route path="planner" element={<PlannerPage />} />
+        <Route path="tasks" element={<TasksPage />} />
+        <Route path="reminders" element={<RemindersPage />} />
+        <Route path="completed" element={<CompletedPage />} />
+        <Route path="needs-replan" element={<NeedsReplanPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/planner" replace />} />
     </Routes>
   )
 }

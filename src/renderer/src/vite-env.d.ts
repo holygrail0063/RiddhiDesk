@@ -14,12 +14,16 @@ interface ImportMeta {
   readonly env: ImportMetaEnv
 }
 
+type RiddhiDeskNotificationAction = { type: 'task' | 'reminder'; id: string }
+
 interface Window {
   riddhiDesk?: {
     showNotification: (payload: {
       title: string
       body: string
       tag?: string
+      action?: RiddhiDeskNotificationAction
     }) => Promise<boolean>
+    onNotificationClick?: (cb: (action: RiddhiDeskNotificationAction) => void) => () => void
   }
 }

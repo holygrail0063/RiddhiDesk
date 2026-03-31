@@ -11,7 +11,7 @@ import { formatShort } from '@/lib/dates'
 
 const CATEGORIES: NoteCategory[] = [
   'Exams',
-  'Fees',
+  'Bill Payment',
   'Study Goals',
   'Personal Plans',
   'Internship Plans',

@@ -34,11 +34,11 @@ export function useNotificationScheduler(
             const key = `reminder:${item.id}:${r}`
             if (!hasNotified(key)) {
               markNotified(key)
-              await showDesktopNotification(
-                item.title,
-                `Reminder: ${item.description ? item.description.slice(0, 120) : 'See RiddhiDesk for details.'}`,
-                key
-              )
+              await showDesktopNotification({
+                title: item.title,
+                body: `Reminder: ${item.description ? item.description.slice(0, 120) : 'See RiddhiDesk for details.'}`,
+                tag: key
+              })
             }
           }
         }
@@ -49,11 +49,11 @@ export function useNotificationScheduler(
             const key = `overdue:${item.id}:${ymd(new Date())}`
             if (!hasNotified(key)) {
               markNotified(key)
-              await showDesktopNotification(
-                item.title,
-                'This item is past its due date. Open RiddhiDesk to update or complete it.',
-                key
-              )
+              await showDesktopNotification({
+                title: item.title,
+                body: 'This item is past its due date. Open RiddhiDesk to update or complete it.',
+                tag: key
+              })
             }
           }
         }

@@ -64,16 +64,36 @@ app.on('window-all-closed', () => {
   }
 })
 
+type NotificationAction = { type: 'task' | 'reminder'; id: string }
+
 ipcMain.handle(
   'notification:show',
-  (_event, payload: { title: string; body: string; tag?: string }) => {
+  (
+    _event,
+    payload: {
+      title: string
+      body: string
+      tag?: string
+      action?: NotificationAction
+    }
+  ) => {
     if (!Notification.isSupported()) {
       return false
     }
+    const action = payload.action
     const n = new Notification({
       title: payload.title,
       body: payload.body,
       silent: false
+    })
+    n.on('click', () => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.show()
+        mainWindow.focus()
+        if (action) {
+          mainWindow.webContents.send('notification:click', action)
+        }
+      }
     })
     n.show()
     return true

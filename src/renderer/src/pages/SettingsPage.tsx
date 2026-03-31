@@ -1,55 +1,38 @@
 import { useEffect, useState } from 'react'
-import { useAuth } from '@/store/authContext'
-import { useAppData } from '@/store/appDataContext'
-import { saveSettings } from '@/services/settingsService'
-import { seedDemoData } from '@/services/seedService'
+import { useDemoAuth } from '@/store/demoAuth'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 
 export function SettingsPage(): JSX.Element {
-  const { user, allowedEmail } = useAuth()
-  const { settings, refreshSettings } = useAppData()
+  const { user, signOut } = useDemoAuth()
   const [reminders, setReminders] = useState(true)
   const [dueDates, setDueDates] = useState(true)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
 
   useEffect(() => {
-    if (settings?.notificationPreferences) {
-      setReminders(settings.notificationPreferences.reminders)
-      setDueDates(settings.notificationPreferences.dueDates)
+    try {
+      const raw = localStorage.getItem('riddhidesk:demo:settings')
+      if (!raw) return
+      const s = JSON.parse(raw) as { reminders?: boolean; dueDates?: boolean }
+      if (typeof s.reminders === 'boolean') setReminders(s.reminders)
+      if (typeof s.dueDates === 'boolean') setDueDates(s.dueDates)
+    } catch {
+      // ignore
     }
-  }, [settings])
+  }, [])
 
   const save = async (): Promise<void> => {
-    if (!user) return
     setBusy(true)
     setMsg(null)
     try {
-      await saveSettings(user.uid, {
-        notificationPreferences: { reminders, dueDates },
-        theme: settings?.theme ?? 'light',
-        allowedEmail: settings?.allowedEmail ?? allowedEmail
-      })
-      await refreshSettings()
+      localStorage.setItem(
+        'riddhidesk:demo:settings',
+        JSON.stringify({ reminders, dueDates })
+      )
       setMsg('Saved.')
     } catch (e) {
       setMsg(e instanceof Error ? e.message : 'Failed to save')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const seed = async (): Promise<void> => {
-    if (!user) return
-    if (!confirm('Add example actuarial data? This will create new documents.')) return
-    setBusy(true)
-    setMsg(null)
-    try {
-      await seedDemoData(user.uid)
-      setMsg('Demo data added.')
-    } catch (e) {
-      setMsg(e instanceof Error ? e.message : 'Seed failed')
     } finally {
       setBusy(false)
     }
@@ -59,15 +42,17 @@ export function SettingsPage(): JSX.Element {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl font-semibold text-ink-900">Settings</h1>
-        <p className="mt-1 text-ink-600">Notifications and demo content.</p>
+        <p className="mt-1 text-ink-600">Demo preferences (no Firebase wired yet).</p>
       </div>
 
       <Card>
         <h2 className="font-display text-lg font-semibold text-ink-900">Access</h2>
         <p className="mt-2 text-sm text-ink-700">
-          This build only allows:{' '}
-          <span className="font-mono text-ink-900">{allowedEmail || '(set VITE_ALLOWED_EMAIL)'}</span>
+          Signed in as <span className="font-mono text-ink-900">{user?.email}</span>
         </p>
+        <Button variant="secondary" className="mt-4" onClick={signOut}>
+          Sign out (demo)
+        </Button>
       </Card>
 
       <Card>
@@ -101,10 +86,19 @@ export function SettingsPage(): JSX.Element {
       <Card>
         <h2 className="font-display text-lg font-semibold text-ink-900">Demo data</h2>
         <p className="mt-2 text-sm text-ink-700">
-          Load sample exams, fees, notes, and internship-style plans into your private Firestore.
+          This UI uses local demo tasks for now. You can reset the app state anytime.
         </p>
-        <Button variant="secondary" className="mt-3" disabled={busy} onClick={() => void seed()}>
-          Load example seed data
+        <Button
+          variant="secondary"
+          className="mt-3"
+          disabled={busy}
+          onClick={() => {
+            if (!confirm('Reset demo settings and reload?')) return
+            localStorage.removeItem('riddhidesk:demo:settings')
+            location.reload()
+          }}
+        >
+          Reset demo settings
         </Button>
       </Card>
 
