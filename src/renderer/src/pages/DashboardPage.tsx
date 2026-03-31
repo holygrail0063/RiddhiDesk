@@ -5,7 +5,7 @@ import { usePlanner } from '@/store/plannerContext'
 import { isPast } from '@/lib/dateMath'
 
 export function DashboardPage(): JSX.Element {
-  const { tasks } = usePlanner()
+  const { tasks, loading, error } = usePlanner()
 
   const snap = useMemo(() => {
     const active = tasks.filter((t) => t.status !== 'completed')
@@ -52,6 +52,27 @@ export function DashboardPage(): JSX.Element {
           </p>
         </Card>
       </div>
+
+      {error ? (
+        <Card className="border-red-200 bg-red-50/40">
+          <p className="text-sm text-red-900">{error}</p>
+        </Card>
+      ) : null}
+
+      {loading ? (
+        <Card>
+          <p className="text-sm text-ink-500">Loading dashboard…</p>
+        </Card>
+      ) : null}
+
+      {!loading && tasks.length === 0 ? (
+        <Card className="rounded-3xl px-6 py-10 text-center">
+          <h2 className="font-display text-2xl font-semibold text-ink-900">No tasks yet</h2>
+          <p className="mt-2 text-sm text-ink-600">
+            Add your first task in Planner to start tracking due dates, completions, and reminders.
+          </p>
+        </Card>
+      ) : null}
 
       <Card>
         <div className="mb-3 flex items-center justify-between">

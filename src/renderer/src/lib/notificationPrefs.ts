@@ -3,7 +3,7 @@ export type NotificationPrefs = {
   dueDates: boolean
 }
 
-const KEY = 'riddhidesk:demo:settings'
+const KEY = 'riddhidesk:settings:v1'
 
 export function loadNotificationPrefs(): NotificationPrefs {
   try {

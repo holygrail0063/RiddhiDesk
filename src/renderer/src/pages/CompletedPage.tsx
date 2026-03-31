@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 
 export function CompletedPage(): JSX.Element {
-  const { tasks } = usePlanner()
+  const { tasks, loading, error } = usePlanner()
 
   const done = useMemo(
     () => tasks.filter((t) => t.status === 'completed'),
@@ -18,9 +18,21 @@ export function CompletedPage(): JSX.Element {
         <p className="mt-1 text-ink-600">A tidy archive of what you finished.</p>
       </div>
 
-      {done.length === 0 ? (
+      {error ? (
+        <Card className="border-red-200 bg-red-50/40">
+          <p className="text-sm text-red-900">{error}</p>
+        </Card>
+      ) : null}
+
+      {loading ? (
         <Card>
-          <p className="text-sm text-ink-600">No completed tasks yet.</p>
+          <p className="text-sm text-ink-500">Loading completed tasks…</p>
+        </Card>
+      ) : null}
+
+      {!loading && done.length === 0 ? (
+        <Card>
+          <p className="text-sm text-ink-600">Nothing completed yet.</p>
         </Card>
       ) : (
         <div className="grid gap-3">

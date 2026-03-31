@@ -15,7 +15,8 @@
     "start": "node server/web.mjs",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "pack": "electron-builder --dir",
-    "dist": "electron-vite build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win"
+    "dist": "electron-vite build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win",
+    "package:win": "electron-vite build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
@@ -53,7 +54,8 @@
     "appId": "com.riddhidesk.app",
     "productName": "RiddhiDesk",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "build"
     },
     "files": [
       "out/**/*"
@@ -62,6 +64,7 @@
       "target": [
         "nsis"
       ],
+      "artifactName": "${productName}-Setup-${version}.${ext}",
       "signAndEditExecutable": false,
       "signDlls": false,
       "verifyUpdateCodeSignature": false

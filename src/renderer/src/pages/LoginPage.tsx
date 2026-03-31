@@ -9,7 +9,6 @@ export function LoginPage(): JSX.Element {
     signInGoogle,
     accessDenied,
     clearAccessDenied,
-    allowedEmail,
     authError,
     authInfo,
     clearAuthError
@@ -44,9 +43,7 @@ export function LoginPage(): JSX.Element {
   }
 
   const errorMessage = accessDenied
-    ? allowedEmail
-      ? `This account is not allowed. Sign in with ${allowedEmail}.`
-      : 'This account is not allowed.'
+    ? 'This account is not authorized. Please contact Akash for access.'
     : authError || signInError
 
   return (

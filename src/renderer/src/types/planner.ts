@@ -23,5 +23,7 @@ export type PlannerTask = {
   status: TaskStatus
   reminderAt?: string // ISO local string
   timeLabel?: string // "7:30 PM"
+  dueNotificationSent?: boolean
+  overdueNotificationSent?: boolean
 }
 

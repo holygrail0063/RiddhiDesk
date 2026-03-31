@@ -6,7 +6,13 @@ import { Badge } from '@/components/ui/Badge'
 import { ReminderModal } from '@/components/reminders/ReminderModal'
 import type { Reminder } from '@/types/reminder'
 import { bucketReminders } from '@/lib/reminderBuckets'
-import { loadReminders, saveReminders } from '@/lib/reminderStorage'
+import { useAuth } from '@/store/authContext'
+import {
+  subscribeReminders,
+  upsertReminder,
+  updateReminder,
+  deleteReminder
+} from '@/services/firestore/reminders'
 
 function timeLabel(iso: string): string {
   return new Date(iso).toLocaleTimeString(undefined, {
@@ -39,7 +45,7 @@ function Section({
     return (
       <div>
         <h2 className="mb-3 font-display text-lg font-semibold text-ink-900">{title}</h2>
-        <p className="text-sm text-ink-500">No reminders.</p>
+        <p className="text-sm text-ink-500">No reminders yet.</p>
       </div>
     )
   }
@@ -96,19 +102,28 @@ function Section({
 }
 
 export function RemindersPage(): JSX.Element {
+  const { user, status } = useAuth()
   const [items, setItems] = useState<Reminder[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Reminder | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    setItems(loadReminders())
-  }, [])
-
-  useEffect(() => {
-    const sync = (): void => setItems(loadReminders())
-    window.addEventListener('riddhidesk:reminders-updated', sync)
-    return () => window.removeEventListener('riddhidesk:reminders-updated', sync)
-  }, [])
+    if (status !== 'allowed' || !user) {
+      setItems([])
+      setLoading(false)
+      setError(null)
+      return
+    }
+    setLoading(true)
+    setError(null)
+    const unsub = subscribeReminders(user.uid, (next) => {
+      setItems(next)
+      setLoading(false)
+    })
+    return () => unsub()
+  }, [user, status])
 
   useEffect(() => {
     const scrollTo = (): void => {
@@ -127,55 +142,48 @@ export function RemindersPage(): JSX.Element {
     return () => window.removeEventListener('riddhidesk:focus-reminder', scrollTo)
   }, [items])
 
-  const persist = useCallback((next: Reminder[]) => {
-    setItems(next)
-    saveReminders(next)
-  }, [])
-
   const grouped = useMemo(() => bucketReminders(items), [items])
 
   const toggle = (id: string) => {
-    persist(
-      items.map((r) =>
-        r.id !== id
-          ? r
-          : { ...r, status: r.status === 'completed' ? 'upcoming' : 'completed' }
-      )
-    )
+    if (!user) return
+    const current = items.find((r) => r.id === id)
+    if (!current) return
+    void updateReminder(user.uid, id, {
+      status: current.status === 'completed' ? 'upcoming' : 'completed'
+    }).catch((e) => setError(e instanceof Error ? e.message : 'Failed to update reminder'))
   }
 
   const remove = (id: string) => {
-    persist(items.filter((r) => r.id !== id))
+    if (!user) return
+    void deleteReminder(user.uid, id).catch((e) =>
+      setError(e instanceof Error ? e.message : 'Failed to delete reminder')
+    )
   }
 
   const saveReminder = (payload: Omit<Reminder, 'id'> & { id?: string }) => {
+    if (!user) return
     if (payload.id) {
-      persist(
-        items.map((r) => {
-          if (r.id !== payload.id) return r
-          const atChanged = r.at !== payload.at
-          return {
-            ...r,
-            title: payload.title,
-            description: payload.description,
-            at: payload.at,
-            category: payload.category,
-            status: payload.status,
-            notificationSent: atChanged ? false : r.notificationSent,
-            linkedTaskId: r.linkedTaskId
-          }
-        })
-      )
+      const current = items.find((r) => r.id === payload.id)
+      const atChanged = current?.at !== payload.at
+      void upsertReminder(user.uid, {
+        id: payload.id,
+        title: payload.title,
+        description: payload.description,
+        at: payload.at,
+        category: payload.category,
+        status: payload.status,
+        notificationSent: atChanged ? false : current?.notificationSent,
+        linkedTaskId: current?.linkedTaskId
+      }).catch((e) => setError(e instanceof Error ? e.message : 'Failed to save reminder'))
     } else {
-      const r: Reminder = {
+      void upsertReminder(user.uid, {
         id: `r_${Math.random().toString(16).slice(2)}`,
         title: payload.title,
         description: payload.description,
         at: payload.at,
         category: payload.category,
         status: payload.status
-      }
-      persist([r, ...items])
+      }).catch((e) => setError(e instanceof Error ? e.message : 'Failed to save reminder'))
     }
   }
 
@@ -198,6 +206,17 @@ export function RemindersPage(): JSX.Element {
         </Button>
       </div>
 
+      {error ? (
+        <Card className="border-red-200 bg-red-50/40">
+          <p className="text-sm text-red-900">{error}</p>
+        </Card>
+      ) : null}
+
+      {loading ? (
+        <Card>
+          <p className="text-sm text-ink-500">Loading reminders…</p>
+        </Card>
+      ) : (
       <div className="space-y-10">
         <Section
           title="Today"
@@ -230,6 +249,7 @@ export function RemindersPage(): JSX.Element {
           onDelete={remove}
         />
       </div>
+      )}
 
       <ReminderModal
         open={modalOpen}

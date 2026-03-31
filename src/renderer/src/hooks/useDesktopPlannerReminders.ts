@@ -1,13 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { PlannerTask } from '@/types/planner'
-import { loadReminders, markReminderNotificationSent } from '@/lib/reminderStorage'
 import { loadNotificationPrefs } from '@/lib/notificationPrefs'
-import {
-  isTaskDueSent,
-  markTaskDueSent,
-  isTaskOverdueSent,
-  markTaskOverdueSent
-} from '@/lib/notificationStateV2'
 import { getTaskDueMoment, formatDueBody, formatOverdueBody } from '@/lib/taskDue'
 import { pushMissedNotifications, type MissedItem } from '@/lib/missedNotifications'
 import {
@@ -16,6 +9,10 @@ import {
 } from '@/lib/notificationService'
 import { useAuth } from '@/store/authContext'
 import { usePlanner } from '@/store/plannerContext'
+import type { Reminder } from '@/types/reminder'
+import { subscribeReminders, updateReminder } from '@/services/firestore/reminders'
+import { updateTask as updateTaskDoc } from '@/services/firestore/tasks'
+import { isElectronRuntime } from '@/lib/authRuntime'
 
 const INTERVAL_MS = 60_000
 const DUE_GRACE_MS = 24 * 60 * 60 * 1000
@@ -42,11 +39,17 @@ export function useDesktopPlannerReminders(): void {
   const { user, status } = useAuth()
   const { tasks } = usePlanner()
   const tasksRef = useRef(tasks)
+  const remindersRef = useRef<Reminder[]>([])
   tasksRef.current = tasks
   const permRef = useRef(false)
 
   useEffect(() => {
+    if (!isElectronRuntime()) return
     if (status !== 'allowed' || !user) return
+
+    const unsubReminders = subscribeReminders(user.uid, (items) => {
+      remindersRef.current = items
+    })
 
     void ensureNotificationPermission().then((ok) => {
       permRef.current = ok
@@ -55,7 +58,7 @@ export function useDesktopPlannerReminders(): void {
     const run = async (): Promise<void> => {
       const prefs = loadNotificationPrefs()
       const list = tasksRef.current
-      const reminders = loadReminders()
+      const reminders = remindersRef.current
       const now = Date.now()
       const queue: QueueItem[] = []
       const missedBatch: Omit<MissedItem, 'id'>[] = []
@@ -65,7 +68,7 @@ export function useDesktopPlannerReminders(): void {
           if (!isIncomplete(task)) continue
           const dueMoment = getTaskDueMoment(task).getTime()
           if (now < dueMoment) continue
-          if (isTaskDueSent(task.id, dueMoment)) continue
+          if (task.dueNotificationSent) continue
 
           const late = now - dueMoment
           if (late <= DUE_GRACE_MS) {
@@ -76,10 +79,12 @@ export function useDesktopPlannerReminders(): void {
               body: formatDueBody(task),
               tag: `task-due:${task.id}:${dueMoment}`,
               action: { type: 'task', id: task.id },
-              mark: () => markTaskDueSent(task.id, dueMoment)
+              mark: () => {
+                void updateTaskDoc(user.uid, task.id, { dueNotificationSent: true })
+              }
             })
           } else {
-            markTaskDueSent(task.id, dueMoment)
+            void updateTaskDoc(user.uid, task.id, { dueNotificationSent: true })
             missedBatch.push({
               kind: 'task_due',
               refId: task.id,
@@ -96,15 +101,15 @@ export function useDesktopPlannerReminders(): void {
           if (!isIncomplete(task)) continue
           const dueMoment = getTaskDueMoment(task).getTime()
           if (now < dueMoment + OVERDUE_DELAY_MS) continue
-          if (isTaskOverdueSent(task.id, dueMoment)) continue
+          if (task.overdueNotificationSent) continue
 
           const late = now - dueMoment
-          if (!isTaskDueSent(task.id, dueMoment) && late <= DUE_GRACE_MS) {
+          if (!task.dueNotificationSent && late <= DUE_GRACE_MS) {
             continue
           }
 
           if (late > OVERDUE_GRACE_MS) {
-            markTaskOverdueSent(task.id, dueMoment)
+            void updateTaskDoc(user.uid, task.id, { overdueNotificationSent: true })
             missedBatch.push({
               kind: 'task_overdue',
               refId: task.id,
@@ -122,7 +127,9 @@ export function useDesktopPlannerReminders(): void {
             body: formatOverdueBody(task),
             tag: `task-overdue:${task.id}:${dueMoment}`,
             action: { type: 'task', id: task.id },
-            mark: () => markTaskOverdueSent(task.id, dueMoment)
+            mark: () => {
+              void updateTaskDoc(user.uid, task.id, { overdueNotificationSent: true })
+            }
           })
         }
       }
@@ -135,7 +142,7 @@ export function useDesktopPlannerReminders(): void {
 
           const late = now - atMs
           if (late > REMINDER_GRACE_MS) {
-            markReminderNotificationSent(r.id)
+            void updateReminder(user.uid, r.id, { notificationSent: true })
             missedBatch.push({
               kind: 'reminder',
               refId: r.id,
@@ -153,7 +160,9 @@ export function useDesktopPlannerReminders(): void {
             body: r.description?.trim() || r.title,
             tag: `reminder:${r.id}`,
             action: { type: 'reminder', id: r.id },
-            mark: () => markReminderNotificationSent(r.id)
+            mark: () => {
+              void updateReminder(user.uid, r.id, { notificationSent: true })
+            }
           })
         }
       }
@@ -189,6 +198,9 @@ export function useDesktopPlannerReminders(): void {
 
     void run()
     const id = window.setInterval(() => void run(), INTERVAL_MS)
-    return () => window.clearInterval(id)
+    return () => {
+      unsubReminders()
+      window.clearInterval(id)
+    }
   }, [user, status])
 }

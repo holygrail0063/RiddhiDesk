@@ -101,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
         return
       }
       if (!isAllowedEmail(next.email)) {
+        console.warn('Unauthorized login attempt:', next.email)
         setAccessDenied(true)
         setAuthError(getUnauthorizedEmailMessage())
         setUser(null)

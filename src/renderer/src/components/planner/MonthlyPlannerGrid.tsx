@@ -135,9 +135,10 @@ export function MonthlyPlannerGrid({
                   </button>
                 )}
                 {list.length === 0 && (
-                  <div className="rounded-xl border border-dashed border-paper-200 bg-paper-50/50 px-2 py-3 text-[11px] text-ink-500">
-                    Open space
-                  </div>
+                  <div
+                    className="rounded-xl border border-dashed border-paper-200 bg-paper-50/50 px-2 py-3"
+                    aria-hidden="true"
+                  />
                 )}
               </div>
             </div>

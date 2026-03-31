@@ -8,10 +8,20 @@ import { TaskDetailsModal } from '@/components/planner/TaskDetailsModal'
 import { WeeklyPlannerView } from '@/components/planner/WeeklyPlannerView'
 import { ScribbleView } from '@/components/planner/ScribbleView'
 import type { PlannerTask } from '@/types/planner'
+import { Card } from '@/components/ui/Card'
 
 export function PlannerPage(): JSX.Element {
-  const { viewMode, upsertTask, tasks, selectedTaskId, setSelectedTaskId, toggleComplete, postpone } =
-    usePlanner()
+  const {
+    viewMode,
+    upsertTask,
+    tasks,
+    selectedTaskId,
+    setSelectedTaskId,
+    toggleComplete,
+    postpone,
+    loading,
+    error
+  } = usePlanner()
   const [month, setMonth] = useState(() => new Date())
 
   useEffect(() => {
@@ -50,7 +60,22 @@ export function PlannerPage(): JSX.Element {
       />
 
       <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-6 pb-8 pt-2 lg:px-8 lg:pb-10">
-        {viewMode === 'monthly' ? (
+        {error ? (
+          <Card className="border-red-200 bg-red-50/40">
+            <p className="text-sm text-red-900">{error}</p>
+          </Card>
+        ) : loading ? (
+          <Card>
+            <p className="text-sm text-ink-500">Loading tasks…</p>
+          </Card>
+        ) : viewMode !== 'scribble' && tasks.length === 0 ? (
+          <Card className="mx-auto max-w-3xl rounded-3xl px-6 py-10 text-center">
+            <h2 className="font-display text-2xl font-semibold text-ink-900">No tasks scheduled</h2>
+            <p className="mt-2 text-sm text-ink-600">
+              Start with your first task to build a clean weekly or monthly plan.
+            </p>
+          </Card>
+        ) : viewMode === 'monthly' ? (
           <MonthlyPlannerGrid
             month={month}
             onOpenDay={(ymd) => {

@@ -10,9 +10,11 @@ export function SettingsPage(): JSX.Element {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
 
+  const SETTINGS_KEY = 'riddhidesk:settings:v1'
+
   useEffect(() => {
     try {
-      const raw = localStorage.getItem('riddhidesk:demo:settings')
+      const raw = localStorage.getItem(SETTINGS_KEY)
       if (!raw) return
       const s = JSON.parse(raw) as { reminders?: boolean; dueDates?: boolean }
       if (typeof s.reminders === 'boolean') setReminders(s.reminders)
@@ -27,7 +29,7 @@ export function SettingsPage(): JSX.Element {
     setMsg(null)
     try {
       localStorage.setItem(
-        'riddhidesk:demo:settings',
+        SETTINGS_KEY,
         JSON.stringify({ reminders, dueDates })
       )
       setMsg('Saved.')
@@ -80,25 +82,6 @@ export function SettingsPage(): JSX.Element {
         </div>
         <Button className="mt-4" disabled={busy} onClick={() => void save()}>
           Save preferences
-        </Button>
-      </Card>
-
-      <Card>
-        <h2 className="font-display text-lg font-semibold text-ink-900">Demo data</h2>
-        <p className="mt-2 text-sm text-ink-700">
-          This UI uses local demo tasks for now. You can reset the app state anytime.
-        </p>
-        <Button
-          variant="secondary"
-          className="mt-3"
-          disabled={busy}
-          onClick={() => {
-            if (!confirm('Reset demo settings and reload?')) return
-            localStorage.removeItem('riddhidesk:demo:settings')
-            location.reload()
-          }}
-        >
-          Reset demo settings
         </Button>
       </Card>
 

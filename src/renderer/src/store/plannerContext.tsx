@@ -7,15 +7,21 @@ import {
   type ReactNode
 } from 'react'
 import type { PlannerTask } from '@/types/planner'
-import { demoTasks } from '@/data/demoTasks'
 import { addDaysYmd, diffDays, isPast } from '@/lib/dateMath'
-import { loadPlannerTasks, savePlannerTasks } from '@/lib/plannerStorage'
+import { useAuth } from '@/store/authContext'
+import {
+  subscribeTasks,
+  upsertTask as saveTaskDoc,
+  updateTask as updateTaskDoc
+} from '@/services/firestore/tasks'
 
 type ViewMode = 'monthly' | 'weekly' | 'scribble'
 
 type PlannerContextValue = {
   tasks: PlannerTask[]
   selectedTaskId: string | null
+  loading: boolean
+  error: string | null
   viewMode: ViewMode
   query: string
   setQuery: (q: string) => void
@@ -35,44 +41,59 @@ function computeNeedsReplan(t: PlannerTask): boolean {
 }
 
 export function PlannerProvider({ children }: { children: ReactNode }): JSX.Element {
-  const [tasks, setTasks] = useState<PlannerTask[]>(() => {
-    const saved = loadPlannerTasks()
-    if (saved !== null) return saved
-    return demoTasks
-  })
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(() => {
-    const saved = loadPlannerTasks()
-    const seed = saved !== null ? saved : demoTasks
-    return seed[0]?.id ?? null
-  })
-
-  useEffect(() => {
-    savePlannerTasks(tasks)
-  }, [tasks])
+  const { user, status } = useAuth()
+  const [tasks, setTasks] = useState<PlannerTask[]>([])
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('monthly')
   const [query, setQuery] = useState('')
 
+  useEffect(() => {
+    if (status !== 'allowed' || !user) {
+      setTasks([])
+      setSelectedTaskId(null)
+      setLoading(false)
+      setError(null)
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+    const unsub = subscribeTasks(user.uid, (items) => {
+      setTasks(items)
+      setSelectedTaskId((current) => {
+        if (current && items.some((task) => task.id === current)) return current
+        return items[0]?.id ?? null
+      })
+      setLoading(false)
+    })
+
+    return () => unsub()
+  }, [user, status])
+
   const toggleComplete = (id: string) => {
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id !== id
-          ? t
-          : {
-              ...t,
-              status: t.status === 'completed' ? 'todo' : 'completed'
-            }
-      )
-    )
+    if (!user) return
+    const task = tasks.find((item) => item.id === id)
+    if (!task) return
+    void updateTaskDoc(user.uid, id, {
+      status: task.status === 'completed' ? 'todo' : 'completed'
+    }).catch((e) => setError(e instanceof Error ? e.message : 'Failed to update task'))
   }
 
   const upsertTask = (t: PlannerTask) => {
-    setTasks((prev) => {
-      const idx = prev.findIndex((x) => x.id === t.id)
-      if (idx === -1) return [t, ...prev]
-      const next = [...prev]
-      next[idx] = t
-      return next
-    })
+    if (!user) return
+    const existing = tasks.find((item) => item.id === t.id)
+    const dueChanged =
+      !existing ||
+      existing.currentDueDate !== t.currentDueDate ||
+      existing.timeLabel !== t.timeLabel
+    void saveTaskDoc(user.uid, {
+      ...t,
+      dueNotificationSent: dueChanged ? false : t.dueNotificationSent ?? existing?.dueNotificationSent,
+      overdueNotificationSent:
+        dueChanged ? false : t.overdueNotificationSent ?? existing?.overdueNotificationSent
+    }).catch((e) => setError(e instanceof Error ? e.message : 'Failed to save task'))
   }
 
   const postpone = (id: string): { ok: boolean; warning?: string } => {
@@ -81,32 +102,30 @@ export function PlannerProvider({ children }: { children: ReactNode }): JSX.Elem
     let did = false
     let blocked = false
 
-    setTasks((prev) =>
-      prev.map((t) => {
-        if (t.id !== id) return t
-        if (t.status === 'completed') return t
+    const task = tasks.find((t) => t.id === id)
+    if (!task || task.status === 'completed') return { ok: false }
 
-        const limit = t.plannerType === 'weekly' ? 3 : 5
-        const pushed = diffDays(t.currentDueDate, t.originalDueDate)
+    const limit = task.plannerType === 'weekly' ? 3 : 5
+    const pushed = diffDays(task.currentDueDate, task.originalDueDate)
 
-        if (pushed >= limit) {
-          blocked = true
-          return {
-            ...t,
-            status: 'needs_replan'
-          }
-        }
-
-        did = true
-        const nextDue = addDaysYmd(t.currentDueDate, 1)
-        const needs = diffDays(nextDue, t.originalDueDate) > limit
-        return {
-          ...t,
+    if (pushed >= limit) {
+      blocked = true
+      if (user) {
+        void updateTaskDoc(user.uid, id, { status: 'needs_replan' }).catch((e) =>
+          setError(e instanceof Error ? e.message : 'Failed to update task')
+        )
+      }
+    } else {
+      did = true
+      const nextDue = addDaysYmd(task.currentDueDate, 1)
+      const needs = diffDays(nextDue, task.originalDueDate) > limit
+      if (user) {
+        void updateTaskDoc(user.uid, id, {
           currentDueDate: nextDue,
-          status: needs ? 'needs_replan' : t.status
-        }
-      })
-    )
+          status: needs ? 'needs_replan' : task.status
+        }).catch((e) => setError(e instanceof Error ? e.message : 'Failed to update task'))
+      }
+    }
 
     if (blocked) return { ok: false, warning }
     if (!did) return { ok: false }
@@ -132,6 +151,8 @@ export function PlannerProvider({ children }: { children: ReactNode }): JSX.Elem
     () => ({
       tasks: normalized,
       selectedTaskId,
+      loading,
+      error,
       viewMode,
       query,
       setQuery,
@@ -141,7 +162,7 @@ export function PlannerProvider({ children }: { children: ReactNode }): JSX.Elem
       upsertTask,
       postpone
     }),
-    [normalized, selectedTaskId, viewMode, query]
+    [normalized, selectedTaskId, loading, error, viewMode, query]
   )
 
   return <PlannerContext.Provider value={value}>{children}</PlannerContext.Provider>

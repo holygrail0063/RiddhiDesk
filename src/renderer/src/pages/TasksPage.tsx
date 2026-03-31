@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { isPast } from '@/lib/dateMath'
 
 export function TasksPage(): JSX.Element {
-  const { tasks, setSelectedTaskId } = usePlanner()
+  const { tasks, setSelectedTaskId, loading, error } = usePlanner()
   const [q, setQ] = useState('')
 
   const rows = useMemo(() => {
@@ -38,9 +38,23 @@ export function TasksPage(): JSX.Element {
         onChange={(e) => setQ(e.target.value)}
       />
 
-      {rows.length === 0 ? (
+      {error ? (
+        <Card className="border-red-200 bg-red-50/40">
+          <p className="text-sm text-red-900">{error}</p>
+        </Card>
+      ) : null}
+
+      {loading ? (
         <Card>
-          <p className="text-sm text-ink-600">No matching tasks.</p>
+          <p className="text-sm text-ink-500">Loading tasks…</p>
+        </Card>
+      ) : null}
+
+      {!loading && rows.length === 0 ? (
+        <Card>
+          <p className="text-sm text-ink-600">
+            {q.trim() ? 'No matching tasks.' : 'No tasks yet.'}
+          </p>
         </Card>
       ) : (
         <div className="grid gap-3">
