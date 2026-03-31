@@ -43,6 +43,10 @@ function createWindow(): void {
     backgroundColor: '#fdfcfa',
     webPreferences: {
       preload: preloadPath(),
+      // ESM preload in this app requires unsandboxed preload execution.
+      // Without this, Electron may fail loading preload with
+      // "Cannot use import statement outside a module".
+      sandbox: false,
       contextIsolation: true,
       nodeIntegration: false
     }
