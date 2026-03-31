@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, Notification, shell } from 'electron'
 import fs from 'fs'
 import path from 'path'
+import { startDesktopGoogleSignIn, type DesktopGoogleAuthResult } from './googleDesktopAuth'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -96,6 +97,18 @@ app.on('window-all-closed', () => {
 })
 
 type NotificationAction = { type: 'task' | 'reminder'; id: string }
+
+ipcMain.handle(
+  'auth:google-desktop-sign-in',
+  async (): Promise<DesktopGoogleAuthResult> => {
+    const result = await startDesktopGoogleSignIn()
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.show()
+      mainWindow.focus()
+    }
+    return result
+  }
+)
 
 ipcMain.handle(
   'notification:show',

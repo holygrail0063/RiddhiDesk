@@ -11,6 +11,7 @@ export function LoginPage(): JSX.Element {
     clearAccessDenied,
     allowedEmail,
     authError,
+    authInfo,
     clearAuthError
   } = useAuth()
   const [busy, setBusy] = useState(false)
@@ -52,6 +53,7 @@ export function LoginPage(): JSX.Element {
     <RiddhiDeskLogin
       onGoogleSignIn={onGoogle}
       loading={busy}
+      info={authInfo}
       error={errorMessage}
     />
   )

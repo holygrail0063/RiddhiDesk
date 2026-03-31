@@ -15,9 +15,11 @@ interface ImportMeta {
 }
 
 type RiddhiDeskNotificationAction = { type: 'task' | 'reminder'; id: string }
+type RiddhiDeskDesktopGoogleAuthResult = { idToken: string; accessToken: string }
 
 interface Window {
   riddhiDesk?: {
+    startDesktopGoogleSignIn?: () => Promise<RiddhiDeskDesktopGoogleAuthResult>
     showNotification: (payload: {
       title: string
       body: string

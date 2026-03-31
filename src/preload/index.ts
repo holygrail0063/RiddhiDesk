@@ -1,8 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
 type NotificationAction = { type: 'task' | 'reminder'; id: string }
+type DesktopGoogleAuthResult = { idToken: string; accessToken: string }
 
 contextBridge.exposeInMainWorld('riddhiDesk', {
+  startDesktopGoogleSignIn: () => ipcRenderer.invoke('auth:google-desktop-sign-in'),
   showNotification: (payload: {
     title: string
     body: string
@@ -28,6 +30,7 @@ declare global {
         tag?: string
         action?: NotificationAction
       }) => Promise<boolean>
+      startDesktopGoogleSignIn: () => Promise<DesktopGoogleAuthResult>
       onNotificationClick: (cb: (action: NotificationAction) => void) => () => void
     }
   }

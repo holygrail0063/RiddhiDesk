@@ -1,6 +1,7 @@
 import {
   GoogleAuthProvider,
   onAuthStateChanged,
+  signInWithCredential,
   signInWithPopup,
   signOut,
   type User
@@ -15,19 +16,18 @@ import {
   type ReactNode
 } from 'react'
 import { auth, getMissingFirebaseEnvKeys } from '@/firebase/config'
+import { getAuthRuntime, type AuthRuntime } from '@/lib/authRuntime'
+import {
+  allowedEmails,
+  getUnauthorizedEmailMessage,
+  isAllowedEmail,
+  primaryAllowedEmail
+} from '@/lib/authPolicy'
 import { ensureProfile } from '@/services/profileService'
 import { ensureSettings } from '@/services/settingsService'
-
-const AKASH_ALLOWED_EMAIL = 'akashkamble0063@gmail.com'
-const ENV_ALLOWED_EMAIL = (import.meta.env.VITE_ALLOWED_EMAIL || '').trim().toLowerCase()
-const ALLOWED_EMAILS = Array.from(
-  new Set([ENV_ALLOWED_EMAIL, AKASH_ALLOWED_EMAIL].map((x) => x.trim().toLowerCase()).filter(Boolean))
-)
-const PRIMARY_ALLOWED_EMAIL = ENV_ALLOWED_EMAIL || AKASH_ALLOWED_EMAIL
 const MISSING_KEYS = getMissingFirebaseEnvKeys()
 
 type AuthStatus = 'loading' | 'signed_out' | 'allowed'
-type AuthRuntime = 'web' | 'electron'
 
 type AuthContextValue = {
   user: User | null
@@ -35,6 +35,7 @@ type AuthContextValue = {
   accessDenied: boolean
   runtime: AuthRuntime
   authError: string | null
+  authInfo: string | null
   clearAccessDenied: () => void
   clearAuthError: () => void
   signInGoogle: () => Promise<void>
@@ -44,22 +45,12 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-function detectRuntime(): AuthRuntime {
-  return window.riddhiDesk ? 'electron' : 'web'
-}
-
-function isAllowedEmail(email: string | null | undefined): boolean {
-  const normalized = (email || '').trim().toLowerCase()
-  if (!normalized) return false
-  return ALLOWED_EMAILS.includes(normalized)
-}
-
 function mapAuthError(error: unknown, runtime: AuthRuntime): string {
-  if (runtime === 'electron') {
-    return 'Google sign-in is currently available in the web version. Electron auth flow needs system-browser sign-in.'
-  }
   if (error instanceof Error && error.message.startsWith('Missing Firebase config:')) {
     return `${error.message}. Add these as VITE_* variables and redeploy.`
+  }
+  if (runtime === 'electron' && error instanceof Error) {
+    return error.message || 'Desktop Google sign-in failed. Please try again.'
   }
   const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : ''
   if (code) {
@@ -82,11 +73,12 @@ function mapAuthError(error: unknown, runtime: AuthRuntime): string {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }): JSX.Element {
-  const runtime = detectRuntime()
+  const runtime = getAuthRuntime()
   const [user, setUser] = useState<User | null>(null)
   const [status, setStatus] = useState<AuthStatus>('loading')
   const [accessDenied, setAccessDenied] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
+  const [authInfo, setAuthInfo] = useState<string | null>(null)
 
   useEffect(() => {
     if (MISSING_KEYS.length > 0) {
@@ -98,14 +90,13 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
     return onAuthStateChanged(a, async (next) => {
       if (!next) {
         setUser(null)
+        setAuthInfo(null)
         setStatus('signed_out')
         return
       }
       if (!isAllowedEmail(next.email)) {
         setAccessDenied(true)
-        setAuthError(
-          `This account is not allowed. Use ${ALLOWED_EMAILS.join(' or ')}.`
-        )
+        setAuthError(getUnauthorizedEmailMessage())
         setUser(null)
         setStatus('signed_out')
         await signOut(a)
@@ -113,11 +104,12 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
       }
       setAccessDenied(false)
       setAuthError(null)
+      setAuthInfo(null)
       setUser(next)
       setStatus('allowed')
       try {
         await ensureProfile(next.uid, next.displayName, next.email)
-        await ensureSettings(next.uid, PRIMARY_ALLOWED_EMAIL)
+        await ensureSettings(next.uid, primaryAllowedEmail)
       } catch {
         // Firestore errors surface in UI elsewhere
       }
@@ -135,13 +127,29 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
   const signInGoogle = useCallback(async () => {
     setAccessDenied(false)
     setAuthError(null)
+    setAuthInfo(null)
     if (MISSING_KEYS.length > 0) {
       throw new Error(`Missing Firebase config: ${MISSING_KEYS.join(', ')}`)
     }
     if (runtime === 'electron') {
-      throw new Error(
-        'Google sign-in is currently available in the web version. Electron auth flow needs system-browser sign-in.'
-      )
+      if (!window.riddhiDesk?.startDesktopGoogleSignIn) {
+        const msg = 'Desktop Google sign-in is unavailable in this build. Restart the app after rebuilding Electron.'
+        setAuthError(msg)
+        throw new Error(msg)
+      }
+      setAuthInfo('Waiting for Google sign-in in your browser. Finish the browser step to return to RiddhiDesk.')
+      try {
+        const result = await window.riddhiDesk.startDesktopGoogleSignIn()
+        const a = auth()
+        const credential = GoogleAuthProvider.credential(result.idToken, result.accessToken)
+        await signInWithCredential(a, credential)
+        return
+      } catch (e) {
+        setAuthInfo(null)
+        const msg = mapAuthError(e, runtime)
+        setAuthError(msg)
+        throw new Error(msg)
+      }
     }
     const a = auth()
     const provider = new GoogleAuthProvider()
@@ -166,11 +174,12 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
       accessDenied,
       runtime,
       authError,
+      authInfo,
       clearAccessDenied,
       clearAuthError,
       signInGoogle,
       signOutApp,
-      allowedEmail: PRIMARY_ALLOWED_EMAIL
+      allowedEmail: primaryAllowedEmail
     }),
     [
       user,
@@ -178,6 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
       accessDenied,
       runtime,
       authError,
+      authInfo,
       clearAccessDenied,
       clearAuthError,
       signInGoogle,

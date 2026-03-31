@@ -13,6 +13,7 @@ import { cn } from '@/lib/cn'
 type Props = {
   onGoogleSignIn: () => Promise<void>
   loading?: boolean
+  info?: string | null
   error?: string | null
 }
 
@@ -116,6 +117,7 @@ function Character({
 export function RiddhiDeskLogin({
   onGoogleSignIn,
   loading = false,
+  info,
   error
 }: Props): JSX.Element {
   return (
@@ -176,6 +178,11 @@ export function RiddhiDeskLogin({
                     className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900"
                   >
                     {error}
+                  </div>
+                )}
+                {info && !error && (
+                  <div className="mb-4 rounded-xl border border-sage-200 bg-sage-50 px-4 py-3 text-sm text-sage-900">
+                    {info}
                   </div>
                 )}
                 <Button
