@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useDemoAuth } from '@/store/demoAuth'
+import { useAuth } from '@/store/authContext'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 
 export function SettingsPage(): JSX.Element {
-  const { user, signOut } = useDemoAuth()
+  const { user, signOutApp } = useAuth()
   const [reminders, setReminders] = useState(true)
   const [dueDates, setDueDates] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -42,7 +42,7 @@ export function SettingsPage(): JSX.Element {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl font-semibold text-ink-900">Settings</h1>
-        <p className="mt-1 text-ink-600">Demo preferences (no Firebase wired yet).</p>
+        <p className="mt-1 text-ink-600">Notification preferences (stored locally in this browser).</p>
       </div>
 
       <Card>
@@ -50,8 +50,8 @@ export function SettingsPage(): JSX.Element {
         <p className="mt-2 text-sm text-ink-700">
           Signed in as <span className="font-mono text-ink-900">{user?.email}</span>
         </p>
-        <Button variant="secondary" className="mt-4" onClick={signOut}>
-          Sign out (demo)
+        <Button variant="secondary" className="mt-4" onClick={() => void signOutApp()}>
+          Sign out
         </Button>
       </Card>
 

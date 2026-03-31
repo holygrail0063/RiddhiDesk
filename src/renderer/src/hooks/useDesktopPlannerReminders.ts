@@ -14,7 +14,7 @@ import {
   ensureNotificationPermission,
   showDesktopNotification
 } from '@/lib/notificationService'
-import { useDemoAuth } from '@/store/demoAuth'
+import { useAuth } from '@/store/authContext'
 import { usePlanner } from '@/store/plannerContext'
 
 const INTERVAL_MS = 60_000
@@ -39,14 +39,14 @@ function isIncomplete(t: PlannerTask): boolean {
 }
 
 export function useDesktopPlannerReminders(): void {
-  const { user } = useDemoAuth()
+  const { user, status } = useAuth()
   const { tasks } = usePlanner()
   const tasksRef = useRef(tasks)
   tasksRef.current = tasks
   const permRef = useRef(false)
 
   useEffect(() => {
-    if (!user) return
+    if (status !== 'allowed' || !user) return
 
     void ensureNotificationPermission().then((ok) => {
       permRef.current = ok
@@ -190,5 +190,5 @@ export function useDesktopPlannerReminders(): void {
     void run()
     const id = window.setInterval(() => void run(), INTERVAL_MS)
     return () => window.clearInterval(id)
-  }, [user])
+  }, [user, status])
 }

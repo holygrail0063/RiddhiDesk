@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { DemoProtectedRoute } from '@/components/demo/DemoProtectedRoute'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { PlannerProvider } from '@/store/plannerContext'
 import { LoginPage } from '@/pages/LoginPage'
@@ -18,11 +18,11 @@ export default function App(): JSX.Element {
       <Route
         path="/"
         element={
-          <DemoProtectedRoute>
+          <ProtectedRoute>
             <PlannerProvider>
               <MainLayout />
             </PlannerProvider>
-          </DemoProtectedRoute>
+          </ProtectedRoute>
         }
       >
         <Route index element={<Navigate to="/planner" replace />} />

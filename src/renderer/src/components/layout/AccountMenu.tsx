@@ -1,14 +1,13 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { ChevronDown, LogOut, UserCircle2 } from 'lucide-react'
-import { useDemoAuth } from '@/store/demoAuth'
+import { useAuth } from '@/store/authContext'
 import { cn } from '@/lib/cn'
 
 export function AccountMenu(): JSX.Element {
-  const { user, signOut } = useDemoAuth()
+  const { user, signOutApp } = useAuth()
 
   const handleLogout = (): void => {
-    // Placeholder: swap for `await signOut(auth)` when Firebase is wired.
-    signOut()
+    void signOutApp()
   }
 
   return (
