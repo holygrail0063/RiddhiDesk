@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowRight, BookOpenCheck, Loader2 } from 'lucide-react'
+import { ArrowRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/shadcn/button'
 import {
   Card,
@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/shadcn/card'
+import { BrandLogo } from '@/components/ui/BrandLogo'
 import { cn } from '@/lib/cn'
 
 type Props = {
@@ -47,15 +48,22 @@ function GoogleMark({ className }: { className?: string }): JSX.Element {
 
 function Character({
   accent,
-  style
+  style,
+  reducedMotion = false
 }: {
   accent: 'violet' | 'indigo' | 'fuchsia'
   style?: React.CSSProperties
+  reducedMotion?: boolean
 }): JSX.Element {
   const eyeRef = useRef<HTMLDivElement | null>(null)
   const [pupil, setPupil] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
+    if (reducedMotion) {
+      setPupil({ x: 0, y: 0 })
+      return
+    }
+
     const onMove = (e: MouseEvent) => {
       const el = eyeRef.current
       if (!el) return
@@ -69,7 +77,7 @@ function Character({
     }
     window.addEventListener('mousemove', onMove)
     return () => window.removeEventListener('mousemove', onMove)
-  }, [])
+  }, [reducedMotion])
 
   const colors = useMemo(() => {
     const map = {
@@ -114,58 +122,93 @@ function Character({
   )
 }
 
+function useReducedMotion(): boolean {
+  const [reducedMotion, setReducedMotion] = useState(false)
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const onChange = () => setReducedMotion(media.matches)
+
+    onChange()
+    media.addEventListener('change', onChange)
+    return () => media.removeEventListener('change', onChange)
+  }, [])
+
+  return reducedMotion
+}
+
 export function RiddhiDeskLogin({
   onGoogleSignIn,
   loading = false,
   info,
   error
 }: Props): JSX.Element {
+  const reducedMotion = useReducedMotion()
+
   return (
-    <div className="min-h-screen bg-paper-50">
-      <div className="mx-auto grid min-h-screen max-w-[1400px] grid-cols-1 lg:grid-cols-2">
-        <div className="relative hidden overflow-hidden lg:block">
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-600/25 via-purple-500/15 to-sky-500/15" />
-          <div className="absolute -left-16 -top-16 h-72 w-72 rounded-full bg-violet-400/25 blur-3xl" />
-          <div className="absolute -bottom-24 right-0 h-80 w-80 rounded-full bg-fuchsia-400/20 blur-3xl" />
-          <div className="absolute left-16 top-24 h-40 w-40 rounded-[3rem] bg-white/10 blur-sm" />
-          <div className="absolute right-14 top-14 h-24 w-24 rounded-3xl bg-white/10 blur-sm" />
+    <div className="relative min-h-screen overflow-hidden bg-paper-50">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-600/20 via-purple-500/10 to-sky-400/14" />
+        <div className="absolute inset-y-0 left-[-12%] w-[42%] rounded-full bg-violet-300/18 blur-3xl" />
+        <div className="absolute bottom-[-12%] right-[8%] h-[34rem] w-[34rem] rounded-full bg-fuchsia-300/14 blur-3xl" />
+        <div className="absolute left-[10%] top-[8%] h-40 w-40 rounded-[3rem] bg-white/16 blur-sm" />
+        <div className="absolute left-[22%] top-[14%] h-28 w-28 rounded-3xl bg-white/12 blur-sm" />
+        <div className="absolute bottom-[8%] left-[24%] h-32 w-32 rounded-full bg-sky-200/15 blur-2xl" />
+        <div className="absolute left-[6%] top-[14%] hidden h-[22rem] w-[32rem] rounded-[3rem] bg-paper-50/58 blur-2xl lg:block xl:left-[10%] xl:w-[36rem]" />
+        <div className="absolute left-[50%] top-[50%] hidden h-[24rem] w-[24rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-paper-50/44 blur-3xl lg:block" />
+        <div className="absolute right-[3%] top-[10%] hidden h-[80%] w-[34rem] rounded-[3rem] bg-paper-50/82 blur-2xl lg:block xl:w-[38rem]" />
+        <div className="absolute inset-x-6 bottom-4 h-40 rounded-[3rem] bg-gradient-to-t from-white/30 to-transparent blur-3xl sm:inset-x-10 lg:inset-x-16" />
+      </div>
 
-          <div className="relative z-10 flex h-full flex-col p-12">
-            <div className="flex items-center gap-3 text-ink-900">
-              <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/60 shadow-soft ring-1 ring-white/50">
-                <BookOpenCheck className="h-5 w-5 text-violet-700" />
-              </div>
-              <div>
-                <p className="font-display text-2xl font-semibold">RiddhiDesk</p>
-                <p className="text-xs text-ink-700/70">Private planner</p>
-              </div>
-            </div>
+      <div className="relative z-10 mx-auto grid min-h-screen max-w-[1680px] grid-cols-1 lg:grid-cols-[minmax(0,1.25fr)_minmax(420px,560px)]">
+        <div className="relative hidden min-h-screen overflow-hidden lg:block">
+          <div className="relative z-10 flex h-full flex-col justify-between px-12 py-12 xl:px-16 xl:py-14 2xl:px-20">
+            <BrandLogo
+              imageClassName="h-14 w-14 rounded-[1.5rem] bg-white/70 p-1 ring-white/60"
+              subtitleClassName="text-ink-700/70"
+            />
 
-            <div className="mt-24 max-w-[520px]">
-              <h1 className="font-display text-5xl font-semibold leading-[1.1] text-ink-900">
+            <div className="max-w-[560px] pt-10 xl:pt-16">
+              <h1 className="font-display text-5xl font-semibold leading-[1.1] text-ink-900 xl:text-6xl">
                 Track what matters. Finish what you start.
               </h1>
-              <p className="text-muted-foreground mt-5 text-base">
+              <p className="text-muted-foreground mt-5 max-w-[440px] text-base xl:text-lg">
                 Stay consistent with your actuarial prep
               </p>
             </div>
 
-            <div className="relative mt-20 flex flex-1 items-end justify-center">
+            <div className="relative flex min-h-[320px] items-end justify-center xl:min-h-[380px]">
               <div className="absolute left-1/2 top-10 h-64 w-64 -translate-x-1/2 rounded-full bg-white/10 blur-2xl" />
-              <Character accent="violet" style={{ transform: 'translateX(-120px) rotate(-6deg)' }} />
-              <Character accent="indigo" style={{ transform: 'translateY(-28px) rotate(4deg)' }} />
-              <Character accent="fuchsia" style={{ transform: 'translateX(120px) rotate(-2deg)' }} />
+              <Character
+                accent="violet"
+                reducedMotion={reducedMotion}
+                style={{ transform: 'translateX(-120px) rotate(-6deg)' }}
+              />
+              <Character
+                accent="indigo"
+                reducedMotion={reducedMotion}
+                style={{ transform: 'translateY(-28px) rotate(4deg)' }}
+              />
+              <Character
+                accent="fuchsia"
+                reducedMotion={reducedMotion}
+                style={{ transform: 'translateX(120px) rotate(-2deg)' }}
+              />
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-center px-5 py-12 lg:px-12">
-          <div className="w-full max-w-[420px]">
-            <Card className="rounded-3xl shadow-card">
+        <div className="relative flex items-center justify-center px-5 py-12 sm:px-6 lg:px-10 xl:px-16">
+          <div className="relative w-full max-w-[440px]">
+            <div className="pointer-events-none absolute -inset-4 rounded-[2rem] bg-white/25 blur-2xl sm:-inset-6" />
+            <Card className="relative rounded-3xl bg-white/90 shadow-card backdrop-blur">
               <CardHeader>
-                <div className="mb-6 grid h-12 w-12 place-items-center rounded-2xl bg-paper-100 shadow-soft ring-1 ring-paper-200">
-                  <BookOpenCheck className="h-6 w-6 text-sage-600" />
-                </div>
+                <BrandLogo
+                  className="mb-6"
+                  imageClassName="h-14 w-14 bg-paper-100 p-1"
+                  titleClassName="text-xl"
+                  subtitleClassName="hidden"
+                />
                 <CardTitle>Welcome to RiddhiDesk</CardTitle>
                 <CardDescription>
                   Sign in with the approved Google account to continue
@@ -207,8 +250,10 @@ export function RiddhiDeskLogin({
             </Card>
 
             <div className="mt-6 rounded-2xl border border-paper-200 bg-white/70 p-4 text-xs text-ink-700 shadow-soft lg:hidden">
-              <p className="font-medium">RiddhiDesk</p>
-              <p className="mt-1 text-ink-600">Private planner</p>
+              <BrandLogo
+                imageClassName="h-12 w-12 bg-paper-100 p-1"
+                titleClassName="text-base"
+              />
             </div>
           </div>
         </div>

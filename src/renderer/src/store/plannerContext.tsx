@@ -12,7 +12,8 @@ import { useAuth } from '@/store/authContext'
 import {
   subscribeTasks,
   upsertTask as saveTaskDoc,
-  updateTask as updateTaskDoc
+  updateTask as updateTaskDoc,
+  deleteTask as deleteTaskDoc
 } from '@/services/firestore/tasks'
 
 type ViewMode = 'monthly' | 'weekly' | 'scribble'
@@ -30,6 +31,7 @@ type PlannerContextValue = {
   toggleComplete: (id: string) => void
   upsertTask: (t: PlannerTask) => void
   postpone: (id: string) => { ok: boolean; warning?: string }
+  deleteTask: (id: string) => void
 }
 
 const PlannerContext = createContext<PlannerContextValue | null>(null)
@@ -96,6 +98,13 @@ export function PlannerProvider({ children }: { children: ReactNode }): JSX.Elem
     }).catch((e) => setError(e instanceof Error ? e.message : 'Failed to save task'))
   }
 
+  const deleteTask = (id: string) => {
+    if (!user) return
+    void deleteTaskDoc(user.uid, id).catch((e) =>
+      setError(e instanceof Error ? e.message : 'Failed to delete task')
+    )
+  }
+
   const postpone = (id: string): { ok: boolean; warning?: string } => {
     const warning =
       'This task has reached its postponement limit. Please move it into a new weekly or monthly plan.'
@@ -160,7 +169,8 @@ export function PlannerProvider({ children }: { children: ReactNode }): JSX.Elem
       setSelectedTaskId,
       toggleComplete,
       upsertTask,
-      postpone
+      postpone,
+      deleteTask
     }),
     [normalized, selectedTaskId, loading, error, viewMode, query]
   )

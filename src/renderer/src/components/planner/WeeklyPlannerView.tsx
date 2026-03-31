@@ -35,7 +35,7 @@ export function WeeklyPlannerView({
   weekAnchor: Date
   onOpenTask: (id: string) => void
 }): JSX.Element {
-  const { tasks, query, toggleComplete, postpone } = usePlanner()
+  const { tasks, query, toggleComplete, postpone, deleteTask } = usePlanner()
 
   const grouped = useMemo(() => {
     const s = startOfWeek(weekAnchor)
@@ -94,7 +94,7 @@ export function WeeklyPlannerView({
               <div className="px-5 py-5 text-sm text-ink-500">No tasks scheduled.</div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[980px] text-left text-sm">
+                <table className="w-full min-w-[1120px] text-left text-sm">
                   <thead className="bg-paper-100/70 text-xs text-ink-600">
                     <tr>
                       <th className="px-4 py-2">Done</th>
@@ -105,7 +105,7 @@ export function WeeklyPlannerView({
                       <th className="px-4 py-2">Original due</th>
                       <th className="px-4 py-2">Current due</th>
                       <th className="px-4 py-2">Max postpone</th>
-                      <th className="px-4 py-2">Actions</th>
+                      <th className="w-[260px] px-4 py-2">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -136,11 +136,11 @@ export function WeeklyPlannerView({
                           <td className="px-4 py-3">{t.originalDueDate}</td>
                           <td className="px-4 py-3">{t.currentDueDate}</td>
                           <td className="px-4 py-3">{maxPost}</td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
+                          <td className="px-4 py-3 align-top">
+                            <div className="flex min-w-[236px] flex-nowrap items-center gap-2 whitespace-nowrap">
                               <Button
                                 variant="secondary"
-                                className="px-2 py-1 text-xs"
+                                className="px-2 py-1 text-xs leading-none"
                                 onClick={() => {
                                   const res = postpone(t.id)
                                   if (!res.ok && res.warning) alert(res.warning)
@@ -150,10 +150,22 @@ export function WeeklyPlannerView({
                               </Button>
                               <Button
                                 variant="secondary"
-                                className="px-2 py-1 text-xs"
+                                className="px-2 py-1 text-xs leading-none"
                                 onClick={() => onOpenTask(t.id)}
                               >
                                 Details
+                              </Button>
+                              <Button
+                                variant="danger"
+                                className="border border-red-200 bg-red-50 px-2 py-1 text-xs leading-none text-red-700 hover:bg-red-100"
+                                onClick={() => {
+                                  if (!window.confirm('Delete task?\n\nThis task will be permanently removed.')) {
+                                    return
+                                  }
+                                  deleteTask(t.id)
+                                }}
+                              >
+                                Delete
                               </Button>
                             </div>
                           </td>

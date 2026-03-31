@@ -34,36 +34,27 @@ export function AddTaskModal({
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [assignedDate, setAssignedDate] = useState(today)
   const [dueDate, setDueDate] = useState(today)
   const [plannerType, setPlannerType] = useState<PlannerType>('weekly')
   const [category, setCategory] = useState<TaskCategory>('Study Goal')
   const [priority, setPriority] = useState<TaskPriority>('medium')
-  const [reminderAt, setReminderAt] = useState<string>('')
-  const [timeLabel, setTimeLabel] = useState<string>('')
 
   useEffect(() => {
     if (!open) return
     if (initial) {
       setTitle(initial.title)
       setDescription(initial.description)
-      setAssignedDate(initial.assignedDate)
       setDueDate(initial.currentDueDate)
       setPlannerType(initial.plannerType)
       setCategory(initial.category)
       setPriority(initial.priority)
-      setReminderAt(initial.reminderAt ?? '')
-      setTimeLabel(initial.timeLabel ?? '')
     } else {
       setTitle('')
       setDescription('')
-      setAssignedDate(today)
       setDueDate(today)
       setPlannerType('weekly')
       setCategory('Study Goal')
       setPriority('medium')
-      setReminderAt('')
-      setTimeLabel('')
     }
   }, [open, initial, today])
 
@@ -76,15 +67,15 @@ export function AddTaskModal({
       id,
       title: title.trim(),
       description,
-      assignedDate,
+      assignedDate: initial?.assignedDate ?? dueDate,
       originalDueDate: initial?.originalDueDate ?? dueDate,
       currentDueDate: dueDate,
       plannerType,
       category,
       priority,
       status: initial?.status ?? 'todo',
-      reminderAt: reminderAt || undefined,
-      timeLabel: timeLabel || undefined
+      reminderAt: initial?.reminderAt,
+      timeLabel: initial?.timeLabel
     }
     onSave(task)
     onOpenChange(false)
@@ -140,16 +131,7 @@ export function AddTaskModal({
               />
             </div>
 
-            <div>
-              <label className="text-xs font-medium text-ink-700">Assigned date</label>
-              <Input
-                className="mt-1"
-                type="date"
-                value={assignedDate}
-                onChange={(e) => setAssignedDate(e.target.value)}
-              />
-            </div>
-            <div>
+            <div className="md:col-span-2">
               <label className="text-xs font-medium text-ink-700">Due date</label>
               <Input
                 className="mt-1"
@@ -198,26 +180,6 @@ export function AddTaskModal({
                   </option>
                 ))}
               </select>
-            </div>
-
-            <div>
-              <label className="text-xs font-medium text-ink-700">Reminder date/time</label>
-              <Input
-                className="mt-1"
-                type="datetime-local"
-                value={reminderAt}
-                onChange={(e) => setReminderAt(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-medium text-ink-700">Small time label (optional)</label>
-              <Input
-                className="mt-1"
-                value={timeLabel}
-                onChange={(e) => setTimeLabel(e.target.value)}
-                placeholder="e.g., 7:30 PM"
-              />
             </div>
           </div>
 

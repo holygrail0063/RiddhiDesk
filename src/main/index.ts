@@ -5,6 +5,16 @@ import { startDesktopGoogleSignIn, type DesktopGoogleAuthResult } from './google
 
 let mainWindow: BrowserWindow | null = null
 
+function windowIconPath(): string | undefined {
+  const candidates = [
+    path.join(app.getAppPath(), 'build', 'icon.png'),
+    path.join(process.resourcesPath, 'icon.png'),
+    path.join(process.resourcesPath, 'build', 'icon.png')
+  ]
+
+  return candidates.find((candidate) => fs.existsSync(candidate))
+}
+
 function isAuthPopupUrl(raw: string): boolean {
   try {
     const u = new URL(raw)
@@ -42,6 +52,7 @@ function createWindow(): void {
     minHeight: 640,
     show: false,
     backgroundColor: '#fdfcfa',
+    icon: windowIconPath(),
     webPreferences: {
       preload: preloadPath(),
       // ESM preload in this app requires unsandboxed preload execution.

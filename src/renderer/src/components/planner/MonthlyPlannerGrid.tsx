@@ -60,59 +60,92 @@ export function MonthlyPlannerGrid({
 
   return (
     <div className="min-w-0">
-      <div className="grid grid-cols-7 gap-2 pb-2">
+      <div className="grid grid-cols-7 gap-2 pb-3">
         {DOW.map((d) => (
           <div
             key={d}
-            className="px-1 text-xs font-medium tracking-wide text-ink-500"
+            className="px-2 text-[11px] font-medium tracking-wide text-ink-500"
           >
             {d}
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-4">
+      <div className="grid grid-cols-7 gap-3 lg:gap-4">
         {cells.map((d) => {
           const key = toYmd(d)
           const inMonth = sameMonth(d, month)
           const list = tasksByDay.get(key) ?? []
+          const monthLabel = d.toLocaleString(undefined, { month: 'long' })
+          const weekdayLabel = d.toLocaleString(undefined, { weekday: 'long' })
+          const taskCountLabel = `${list.length} task${list.length === 1 ? '' : 's'}`
 
           return (
             <div
               key={key}
               className={cn(
-                'rounded-2xl border bg-white/70 p-1 shadow-soft backdrop-blur-sm transition hover:shadow-card',
-                inMonth ? 'border-paper-200' : 'border-paper-200/70 opacity-75'
+                'rounded-3xl border bg-white/80 p-1 shadow-soft backdrop-blur-sm transition hover:shadow-card',
+                inMonth
+                  ? 'border-paper-200'
+                  : 'border-paper-200/70 bg-paper-50/80 opacity-80'
               )}
             >
               <button
                 type="button"
                 onClick={() => onOpenDay(key)}
-                className="flex w-full items-center justify-between rounded-xl px-3 pb-2 pt-3 text-left hover:bg-paper-100/60"
+                className="flex w-full items-start justify-between rounded-[20px] px-3 pb-2 pt-3 text-left hover:bg-paper-100/60"
               >
-                <div className="flex items-center gap-2">
+                <div className="min-w-0">
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={cn(
+                        'mt-0.5 inline-flex min-h-[34px] min-w-[34px] items-center justify-center rounded-2xl px-2 text-sm font-semibold',
+                        key === todayKey
+                          ? 'bg-sage-600 text-white shadow-soft'
+                          : inMonth
+                            ? 'bg-paper-100 text-ink-900 ring-1 ring-paper-200'
+                            : 'bg-paper-100/80 text-ink-500 ring-1 ring-paper-200'
+                      )}
+                    >
+                      {d.getDate()}
+                    </span>
+                    <div className="min-w-0">
+                      <div
+                        className={cn(
+                          'truncate text-sm font-semibold',
+                          inMonth ? 'text-ink-900' : 'text-ink-600'
+                        )}
+                      >
+                        {monthLabel}
+                      </div>
+                      <div
+                        className={cn(
+                          'mt-0.5 text-[11px]',
+                          inMonth ? 'text-ink-500' : 'text-ink-400'
+                        )}
+                      >
+                        {weekdayLabel}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="ml-3 flex shrink-0 items-start pt-0.5">
                   <span
                     className={cn(
-                      'grid h-7 w-7 place-items-center rounded-xl text-xs font-semibold',
-                      key === todayKey
-                        ? 'bg-sage-600 text-white shadow-soft'
-                        : 'bg-paper-100 text-ink-900 ring-1 ring-paper-200'
+                      'rounded-full px-2 py-0.5 text-[10px] font-medium',
+                      list.length > 0
+                        ? 'bg-paper-100 text-ink-600 ring-1 ring-paper-200'
+                        : 'bg-paper-50 text-ink-400 ring-1 ring-paper-200/80'
                     )}
                   >
-                    {d.getDate()}
+                    {taskCountLabel}
                   </span>
-                  {!inMonth && (
-                    <span className="text-[10px] font-medium text-ink-500">
-                      {d.toLocaleString(undefined, { month: 'short' })}
-                    </span>
-                  )}
                 </div>
-                {list.length > 0 && (
-                  <span className="text-[10px] text-ink-500">{list.length}</span>
-                )}
               </button>
 
-              <div className="flex min-h-[92px] flex-col gap-2 px-3 pb-3">
+              <div className="mx-3 mb-3 border-t border-paper-200/80" />
+
+              <div className="flex min-h-[104px] flex-col gap-2 px-3 pb-3">
                 {list.slice(0, 2).map((t) => (
                   <TaskPill
                     key={t.id}
@@ -128,7 +161,7 @@ export function MonthlyPlannerGrid({
                 {list.length > 2 && (
                   <button
                     type="button"
-                    className="rounded-xl border border-paper-200 bg-paper-50 px-2 py-1 text-left text-[11px] text-ink-600 hover:bg-paper-100"
+                    className="rounded-2xl border border-paper-200 bg-paper-50 px-3 py-1.5 text-left text-[11px] font-medium text-ink-600 hover:bg-paper-100"
                     onClick={() => onOpenDay(key)}
                   >
                     +{list.length - 2} more
@@ -136,7 +169,7 @@ export function MonthlyPlannerGrid({
                 )}
                 {list.length === 0 && (
                   <div
-                    className="rounded-xl border border-dashed border-paper-200 bg-paper-50/50 px-2 py-3"
+                    className="rounded-2xl border border-dashed border-paper-200 bg-paper-50/50 px-2 py-4"
                     aria-hidden="true"
                   />
                 )}

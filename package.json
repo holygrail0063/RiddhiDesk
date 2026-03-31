@@ -53,6 +53,7 @@
     "forceCodeSigning": false,
     "appId": "com.riddhidesk.app",
     "productName": "RiddhiDesk",
+    "icon": "build/icon.ico",
     "directories": {
       "output": "release",
       "buildResources": "build"
@@ -60,7 +61,14 @@
     "files": [
       "out/**/*"
     ],
+    "extraResources": [
+      {
+        "from": "build/icon.png",
+        "to": "icon.png"
+      }
+    ],
     "win": {
+      "icon": "build/icon.ico",
       "target": [
         "nsis"
       ],
@@ -71,7 +79,10 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico"
     }
   }
 }

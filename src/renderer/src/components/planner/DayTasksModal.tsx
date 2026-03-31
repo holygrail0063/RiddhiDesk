@@ -34,13 +34,13 @@ export function DayTasksModal({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-ink-900/30 backdrop-blur-sm" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 w-[640px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-paper-200 bg-paper-50 p-6 shadow-card focus:outline-none">
-          <div className="mb-4 flex items-start justify-between gap-3">
+        <Dialog.Content className="fixed left-1/2 top-1/2 w-[min(92vw,880px)] max-w-[calc(100vw-1.5rem)] -translate-x-1/2 -translate-y-1/2 rounded-[1.75rem] border border-paper-200 bg-paper-50 p-5 shadow-card focus:outline-none sm:max-w-[calc(100vw-2rem)] sm:p-6 lg:w-[min(88vw,960px)] lg:p-8">
+          <div className="mb-6 flex items-start justify-between gap-4">
             <div>
-              <Dialog.Title className="font-display text-xl font-semibold text-ink-900">
+              <Dialog.Title className="font-display text-xl font-semibold text-ink-900 sm:text-2xl">
                 {label || 'Day tasks'}
               </Dialog.Title>
-              <Dialog.Description className="text-sm text-ink-600">
+              <Dialog.Description className="mt-1 text-sm text-ink-600">
                 Monthly view stays lightweight. Use weekly view to execute tasks.
               </Dialog.Description>
             </div>
@@ -55,11 +55,11 @@ export function DayTasksModal({
           </div>
 
           {tasks.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-paper-200 bg-paper-100/50 px-3 py-6 text-center text-sm text-ink-600">
+            <div className="rounded-2xl border border-dashed border-paper-200 bg-paper-100/50 px-4 py-8 text-center text-sm text-ink-600">
               No tasks on this date.
             </div>
           ) : (
-            <div className="max-h-[56vh] space-y-2 overflow-y-auto">
+            <div className="max-h-[min(68vh,720px)] space-y-3 overflow-y-auto pr-1 sm:pr-2">
               {tasks.map((t) => (
                 <TaskPill
                   key={t.id}

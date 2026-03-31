@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { BrandLogo } from '@/components/ui/BrandLogo'
 
 const links = [
   { to: '/dashboard', label: 'Dashboard' },
@@ -14,8 +15,11 @@ export function Sidebar(): JSX.Element {
   return (
     <aside className="flex w-[240px] shrink-0 flex-col border-r border-paper-200 bg-paper-100/80 px-3 py-6">
       <div className="mb-8 px-2">
-        <p className="font-display text-xl font-semibold text-ink-900">RiddhiDesk</p>
-        <p className="mt-1 text-xs text-ink-500">Planner • tasks • timelines</p>
+        <BrandLogo
+          imageClassName="h-14 w-14 rounded-[1.5rem] bg-white p-1"
+          titleClassName="text-xl"
+          subtitle="Planner • tasks • timelines"
+        />
       </div>
       <nav className="flex flex-1 flex-col gap-1">
         {links.map((l) => (

@@ -35,14 +35,14 @@ export function TaskPill({
       type="button"
       onClick={onSelect}
       className={cn(
-        'group flex w-full items-start gap-2 rounded-xl px-2 py-1.5 text-left text-xs ring-1 transition hover:shadow-soft',
+        'group flex w-full items-start gap-2 rounded-2xl px-2.5 py-2 text-left text-xs ring-1 transition hover:shadow-soft',
         tint(task),
         selected && 'ring-2 ring-sage-500/60'
       )}
     >
       <span
         className={cn(
-          'mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-md ring-1 ring-ink-900/10 bg-white/65',
+          'mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-md bg-white/65 ring-1 ring-ink-900/10',
           task.status === 'completed' && 'bg-emerald-600 text-white ring-emerald-700/30'
         )}
         onClick={(e) => {
@@ -64,14 +64,21 @@ export function TaskPill({
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <p className={cn('truncate font-medium', task.status === 'completed' && 'line-through opacity-70')}>
+          <p
+            className={cn(
+              'truncate font-medium',
+              task.status === 'completed' && 'line-through opacity-70'
+            )}
+          >
             {task.title}
           </p>
           {task.timeLabel && (
-            <span className="shrink-0 text-[10px] opacity-70">{task.timeLabel}</span>
+            <span className="shrink-0 rounded-full bg-white/45 px-1.5 py-0.5 text-[10px] opacity-75">
+              {task.timeLabel}
+            </span>
           )}
         </div>
-        <div className="mt-1 flex items-center gap-2">
+        <div className="mt-1.5 flex items-center gap-2">
           <span className="rounded-full bg-white/55 px-2 py-0.5 text-[10px] ring-1 ring-white/60">
             {task.category}
           </span>

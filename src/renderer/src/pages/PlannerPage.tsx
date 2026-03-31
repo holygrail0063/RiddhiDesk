@@ -19,6 +19,7 @@ export function PlannerPage(): JSX.Element {
     setSelectedTaskId,
     toggleComplete,
     postpone,
+    deleteTask,
     loading,
     error
   } = usePlanner()
@@ -138,6 +139,10 @@ export function PlannerPage(): JSX.Element {
           setEditingTask(task)
           setTaskOpen(false)
           setAddOpen(true)
+        }}
+        onDelete={(id) => {
+          deleteTask(id)
+          setTaskOpen(false)
         }}
       />
 

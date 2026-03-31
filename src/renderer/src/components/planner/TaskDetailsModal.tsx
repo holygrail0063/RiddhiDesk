@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog'
-import { AlertTriangle, CalendarDays, CheckCircle2, Clock3, Pencil, Undo2, X } from 'lucide-react'
+import { AlertTriangle, CalendarDays, CheckCircle2, Clock3, Pencil, Trash2, Undo2, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -22,7 +22,8 @@ export function TaskDetailsModal({
   task,
   onToggleComplete,
   onPostpone,
-  onEdit
+  onEdit,
+  onDelete
 }: {
   open: boolean
   onOpenChange: (v: boolean) => void
@@ -30,6 +31,7 @@ export function TaskDetailsModal({
   onToggleComplete: (id: string) => void
   onPostpone: (id: string) => { ok: boolean; warning?: string }
   onEdit: (task: PlannerTask) => void
+  onDelete: (id: string) => void
 }): JSX.Element {
   if (!task) return <></>
 
@@ -157,6 +159,19 @@ export function TaskDetailsModal({
               >
                 <Undo2 className="h-4 w-4" />
                 Postpone
+              </Button>
+              <Button
+                variant="danger"
+                className="w-full justify-center gap-2 border border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                onClick={() => {
+                  if (!window.confirm('Delete task?\n\nThis task will be permanently removed.')) {
+                    return
+                  }
+                  onDelete(task.id)
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete task
               </Button>
             </div>
           </div>
