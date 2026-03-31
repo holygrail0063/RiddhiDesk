@@ -7,7 +7,9 @@ export type DesktopGoogleAuthResult = {
   accessToken: string
 }
 
-const GOOGLE_CLIENT_ID = '__GOOGLE_DESKTOP_CLIENT_ID__'
+declare const __GOOGLE_DESKTOP_CLIENT_ID__: string
+
+const GOOGLE_CLIENT_ID = __GOOGLE_DESKTOP_CLIENT_ID__
 const GOOGLE_SCOPES = ['openid', 'email', 'profile'].join(' ')
 const CALLBACK_PATH = '/oauth/callback'
 const AUTH_TIMEOUT_MS = 3 * 60 * 1000
