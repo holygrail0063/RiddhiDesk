@@ -13,14 +13,24 @@ const REQUIRED_KEYS = [
 
 type FirebaseEnvKey = (typeof REQUIRED_KEYS)[number]
 
+function normalizeEnvValue(value: unknown): string {
+  const trimmed = String(value ?? '').trim()
+  const unquoted =
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+      ? trimmed.slice(1, -1).trim()
+      : trimmed
+  return unquoted
+}
+
 function isValidEnvValue(value: unknown): boolean {
-  const normalized = String(value ?? '').trim()
+  const normalized = normalizeEnvValue(value)
   return normalized !== '' && normalized.toLowerCase() !== 'undefined' && normalized.toLowerCase() !== 'null'
 }
 
 export function getEnvValue(key: FirebaseEnvKey | 'VITE_ALLOWED_EMAIL'): string {
   const value = import.meta.env[key]
-  return isValidEnvValue(value) ? String(value).trim() : ''
+  return isValidEnvValue(value) ? normalizeEnvValue(value) : ''
 }
 
 function maskApiKey(value: string): string {
@@ -59,6 +69,7 @@ console.info('[Firebase config]', {
   runtime: firebaseEnvSummary.runtime,
   apiKeyPresent: firebaseEnvSummary.apiKeyPresent ? 'yes' : 'no',
   apiKeyMasked: firebaseEnvSummary.apiKeyMasked,
+  apiKeyLength: getEnvValue('VITE_FIREBASE_API_KEY').length,
   authDomainPresent: firebaseEnvSummary.authDomainPresent ? 'yes' : 'no',
   projectIdPresent: firebaseEnvSummary.projectIdPresent ? 'yes' : 'no',
   storageBucketPresent: firebaseEnvSummary.storageBucketPresent ? 'yes' : 'no',
