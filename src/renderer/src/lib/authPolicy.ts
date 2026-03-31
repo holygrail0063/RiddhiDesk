@@ -17,5 +17,5 @@ export function isAllowedEmail(email: string | null | undefined): boolean {
 }
 
 export function getUnauthorizedEmailMessage(): string {
-  return `This account is not allowed. Use ${allowedEmails.join(' or ')}.`
+  return 'This Google account is not authorized for this planner.'
 }

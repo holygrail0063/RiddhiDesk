@@ -46,30 +46,36 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 function mapAuthError(error: unknown, runtime: AuthRuntime): string {
-  if (error instanceof Error && error.message.startsWith('Missing Firebase config:')) {
-    return `${error.message}. Add these as VITE_* variables and redeploy.`
+  if (error instanceof Error && error.message.startsWith('Missing or invalid Firebase config:')) {
+    return 'Firebase config is invalid or missing. Check local env values and restart the app.'
   }
   if (runtime === 'electron' && error instanceof Error) {
-    return error.message || 'Desktop Google sign-in failed. Please try again.'
+    if (error.message.includes('GOOGLE_DESKTOP_CLIENT_ID')) {
+      return 'Desktop Google sign-in is not configured. Add GOOGLE_DESKTOP_CLIENT_ID and restart Electron.'
+    }
+    return 'Google sign-in failed. Please try again.'
   }
   const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : ''
   if (code) {
+    if (code.includes('auth/api-key-not-valid')) {
+      return 'Firebase config is invalid or missing. Check local env values and restart the app.'
+    }
     switch (code) {
       case 'auth/popup-blocked':
-        return 'Popup was blocked by the browser. Allow popups for this site and try again.'
+        return 'Google sign-in failed. Please try again.'
       case 'auth/popup-closed-by-user':
-        return 'Sign-in popup was closed before completion. Please try again.'
+        return 'Google sign-in failed. Please try again.'
       case 'auth/unauthorized-domain':
-        return 'This domain is not authorized in Firebase. Add the deployed domain under Firebase Auth > Authorized domains.'
+        return 'Google sign-in failed. Please try again.'
       case 'auth/invalid-api-key':
-        return 'Firebase API key is invalid. Verify your VITE_FIREBASE_API_KEY setting.'
+        return 'Firebase config is invalid or missing. Check local env values and restart the app.'
       case 'auth/internal-error':
-        return 'Firebase sign-in encountered an internal error. Check Firebase Auth settings and authorized domains.'
+        return 'Google sign-in failed. Please try again.'
       default:
-        return `Firebase sign-in failed (${code}).`
+        return 'Google sign-in failed. Please try again.'
     }
   }
-  return error instanceof Error ? error.message : 'Sign-in failed. Please try again.'
+  return 'Google sign-in failed. Please try again.'
 }
 
 export function AuthProvider({ children }: { children: ReactNode }): JSX.Element {
@@ -129,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
     setAuthError(null)
     setAuthInfo(null)
     if (MISSING_KEYS.length > 0) {
-      throw new Error(`Missing Firebase config: ${MISSING_KEYS.join(', ')}`)
+      throw new Error(`Missing or invalid Firebase config: ${MISSING_KEYS.join(', ')}`)
     }
     if (runtime === 'electron') {
       if (!window.riddhiDesk?.startDesktopGoogleSignIn) {

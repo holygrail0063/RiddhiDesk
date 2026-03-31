@@ -13,7 +13,8 @@ const rendererEnvKeys = [
   'VITE_FIREBASE_STORAGE_BUCKET',
   'VITE_FIREBASE_MESSAGING_SENDER_ID',
   'VITE_FIREBASE_APP_ID',
-  'VITE_ALLOWED_EMAIL'
+  'VITE_ALLOWED_EMAIL',
+  'GOOGLE_DESKTOP_CLIENT_ID'
 ] as const
 
 const rendererEnvDefine = Object.fromEntries(

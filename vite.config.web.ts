@@ -13,6 +13,9 @@ const rendererEnvKeys = [
 ] as const
 
 export default defineConfig(({ mode }) => {
+  // Web builds read Vite env files directly from the repo root.
+  // This is separate from Electron's config pipeline, so the web app
+  // needs its own explicit env loading to avoid mismatches.
   const env = loadEnv(mode, path.resolve(__dirname, '.'), '')
   const rendererEnvDefine = Object.fromEntries(
     rendererEnvKeys.map((key) => [`import.meta.env.${key}`, JSON.stringify(env[key] ?? '')])
